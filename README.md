@@ -10,7 +10,7 @@
 **A real-time AI-powered disaster management platform with satellite GIS mapping,
 ML prediction engine, and resource optimization — VTU Major Project 2024-25**
 
-### 🌐 [Live Demo →]()
+### 🌐 [Live Demo →](https://sandeshpatil13989.github.io/AI-Based-Disaster-Response-Optimization-System)
 
 </div>
 
