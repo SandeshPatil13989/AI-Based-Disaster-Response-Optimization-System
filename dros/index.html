@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Disaster Response Optimization System</title>
+
+<!-- External Libraries -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<!-- Project Stylesheet -->
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ── HEADER ───────────────────────────────────────────── -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    <div>
+      <div class="logo-text">DisasterAI — Response Optimization System</div>
+      <div class="logo-sub">Visvesvaraya Technological University · Jain College of Engineering</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE MONITORING</div>
+    <div class="header-time" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- ── NAV TABS ─────────────────────────────────────────── -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('dashboard',this)">📊 Dashboard <span class="tab-badge danger">3 Active</span></button>
+  <button class="nav-tab" onclick="showPage('map',this)">🗺️ GIS Map</button>
+  <button class="nav-tab" onclick="showPage('prediction',this)">🤖 AI Prediction</button>
+  <button class="nav-tab" onclick="showPage('resources',this)">🚑 Resource Allocation</button>
+  <button class="nav-tab" onclick="showPage('analytics',this)">📈 Analytics</button>
+  <button class="nav-tab" onclick="showPage('incidents',this)">⚠️ Incidents <span class="tab-badge danger">7</span></button>
+</div>
+
+<!-- ── MAIN ─────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="alert-strip">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-text">CRITICAL: Cyclone Nilofar approaching Maharashtra coast — ETA 4h 32min. Emergency protocols activated.</div>
+      <div class="alert-time" id="alert-timer">04:32:00</div>
+    </div>
+    <div class="grid-4">
+      <div class="metric-card"><div class="metric-icon">🌊</div><div class="metric-label">Active Disasters</div><div class="metric-value" style="color:var(--danger)">7</div><div class="metric-change up">▲ 2 from yesterday</div><div class="metric-bar"><div class="metric-bar-fill" style="width:70%;background:var(--danger)"></div></div></div>
+      <div class="metric-card"><div class="metric-icon">👥</div><div class="metric-label">People Affected</div><div class="metric-value" style="color:var(--warning)">2.4M</div><div class="metric-change up">▲ 340K in 6h</div><div class="metric-bar"><div class="metric-bar-fill" style="width:60%;background:var(--warning)"></div></div></div>
+      <div class="metric-card"><div class="metric-icon">🚁</div><div class="metric-label">Rescue Teams Deployed</div><div class="metric-value" style="color:var(--accent)">148</div><div class="metric-change down">▼ Response time: 12min</div><div class="metric-bar"><div class="metric-bar-fill" style="width:74%;background:var(--accent)"></div></div></div>
+      <div class="metric-card"><div class="metric-icon">✅</div><div class="metric-label">People Rescued</div><div class="metric-value" style="color:var(--success)">18,432</div><div class="metric-change down">▲ 94.2% success rate</div><div class="metric-bar"><div class="metric-bar-fill" style="width:94%;background:var(--success)"></div></div></div>
+    </div>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="metric-card"><div class="metric-icon">🏥</div><div class="metric-label">Medical Camps</div><div class="metric-value">312</div><div class="metric-change down">▲ 48 deployed today</div></div>
+      <div class="metric-card"><div class="metric-icon">🍱</div><div class="metric-label">Relief Kits Available</div><div class="metric-value" style="color:var(--warning)">1.2M</div><div class="metric-change up">⚠️ 3 zones understocked</div></div>
+      <div class="metric-card"><div class="metric-icon">📡</div><div class="metric-label">AI Prediction Accuracy</div><div class="metric-value" style="color:var(--teal)">91.4%</div><div class="metric-change down">▲ +2.1% this week</div></div>
+      <div class="metric-card"><div class="metric-icon">⚡</div><div class="metric-label">Avg Response Time</div><div class="metric-value" style="color:var(--success)">11.8<span style="font-size:14px">min</span></div><div class="metric-change down">▼ 3.2min improvement</div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌐 Active Disasters</div>
+          <select class="select-filter" onchange="filterTable(this.value)">
+            <option value="all">All Types</option>
+            <option value="flood">Floods</option>
+            <option value="earthquake">Earthquakes</option>
+            <option value="cyclone">Cyclones</option>
+            <option value="wildfire">Wildfires</option>
+          </select>
+        </div>
+        <table class="d-table"><thead><tr><th>Event</th><th>Location</th><th>Severity</th><th>Status</th></tr></thead><tbody id="disaster-tbody"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">⏱️ Response Timeline</div></div>
+        <div id="timeline-container"></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-header"><div class="card-title">📊 Disaster Frequency (2024)</div></div><div style="position:relative;height:220px"><canvas id="freqChart"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">🎯 Resource Utilization</div></div><div style="position:relative;height:220px"><canvas id="resourceChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- MAP PAGE -->
+  <div class="page" id="page-map">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px">Map Style:</span>
+        <button class="map-view-btn active" onclick="setMapStyle('satellite',this)">🛰️ Satellite</button>
+        <button class="map-view-btn" onclick="setMapStyle('dark',this)">🌑 Dark Ops</button>
+        <button class="map-view-btn" onclick="setMapStyle('terrain',this)">⛰️ Terrain</button>
+        <button class="map-view-btn" onclick="setMapStyle('hybrid',this)">🗺️ Hybrid</button>
+        <button class="map-view-btn" onclick="setMapStyle('topo',this)">📐 Topo</button>
+        <button class="map-view-btn" onclick="setMapStyle('night',this)">🌙 Night IR</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="action-btn" onclick="toggleHeatmap()" id="heatmap-btn">🔥 Heatmap ON</button>
+        <button class="action-btn" onclick="toggleRoutes()" id="routes-btn">🛣️ Routes ON</button>
+        <button class="action-btn" onclick="window._map&&window._map.setView([22,80],5)">⟳ Reset</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px">Layers:</span>
+      <button class="map-layer-btn active" onclick="filterLayer('all',this)">🌐 All</button>
+      <button class="map-layer-btn" onclick="filterLayer('flood',this)">🌊 Floods</button>
+      <button class="map-layer-btn" onclick="filterLayer('earthquake',this)">🌍 Quakes</button>
+      <button class="map-layer-btn" onclick="filterLayer('cyclone',this)">🌀 Cyclones</button>
+      <button class="map-layer-btn" onclick="filterLayer('wildfire',this)">🔥 Wildfires</button>
+      <button class="map-layer-btn" onclick="filterLayer('rescue',this)">🚁 Rescue</button>
+      <button class="map-layer-btn" onclick="filterLayer('shelter',this)">🏕️ Shelters</button>
+    </div>
+    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border2)">
+      <div id="map"></div>
+      <div style="position:absolute;top:14px;left:14px;z-index:900;pointer-events:none">
+        <div style="background:rgba(10,14,26,0.88);border:1px solid rgba(252,129,129,0.4);border-radius:10px;padding:10px 14px;min-width:260px;backdrop-filter:blur(8px)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:7px;height:7px;border-radius:50%;background:#fc8181;animation:pulse 1s ease-in-out infinite"></div><span style="font-size:11px;font-weight:700;color:#fc8181;letter-spacing:.8px">LIVE THREAT FEED</span></div>
+          <div id="ticker-text" style="font-size:12px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;line-height:1.5;min-height:36px"></div>
+        </div>
+      </div>
+      <div style="position:absolute;top:14px;right:14px;z-index:900;pointer-events:none">
+        <div style="background:rgba(10,14,26,0.88);border:1px solid rgba(99,179,237,0.3);border-radius:10px;padding:10px 14px;backdrop-filter:blur(8px)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;font-weight:600">📡 SATELLITE LINK</div>
+          <div style="font-size:11px;margin-bottom:3px"><span style="color:#718096">INSAT-3DR</span>&nbsp;&nbsp;<span style="color:#68d391;font-family:monospace">● ACTIVE</span></div>
+          <div style="font-size:11px;margin-bottom:3px"><span style="color:#718096">Sentinel-1A</span>&nbsp;&nbsp;<span style="color:#68d391;font-family:monospace">● ACTIVE</span></div>
+          <div style="font-size:11px"><span style="color:#718096">RISAT-2B</span>&nbsp;&nbsp;<span style="color:#f6ad55;font-family:monospace">◐ SYNC</span></div>
+          <div style="margin-top:8px;padding-top:6px;border-top:1px solid rgba(99,179,237,0.2);font-size:10px;color:var(--muted);font-family:monospace" id="sat-time">Last sync: --:--:--</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:14px;left:14px;z-index:900;min-width:240px">
+        <div style="background:rgba(10,14,26,0.92);border:1px solid rgba(99,179,237,0.25);border-radius:10px;padding:12px 16px;backdrop-filter:blur(8px)">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:8px">📍 SELECTED ZONE</div>
+          <div id="zone-info" style="font-size:12px;color:var(--muted);line-height:1.6">Click any marker for details</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:14px;right:14px;z-index:900;pointer-events:none">
+        <div style="background:rgba(10,14,26,0.88);border:1px solid rgba(99,179,237,0.2);border-radius:10px;padding:10px 14px;backdrop-filter:blur(8px)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
+            <div><div style="font-size:10px;color:var(--muted)">ZONES</div><div style="font-size:16px;font-weight:700;color:var(--accent);font-family:monospace">2,847</div></div>
+            <div><div style="font-size:10px;color:var(--muted)">ACTIVE</div><div style="font-size:16px;font-weight:700;color:var(--danger);font-family:monospace">7</div></div>
+            <div><div style="font-size:10px;color:var(--muted)">TEAMS</div><div style="font-size:16px;font-weight:700;color:var(--success);font-family:monospace">148</div></div>
+            <div><div style="font-size:10px;color:var(--muted)">SHELTERS</div><div style="font-size:16px;font-weight:700;color:var(--warning);font-family:monospace">312</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px">
+      <div class="metric-card" style="padding:14px"><div class="metric-label">Coverage Area</div><div class="metric-value" style="font-size:20px;color:var(--accent)">3.29M km²</div></div>
+      <div class="metric-card" style="padding:14px"><div class="metric-label">Sensor Nodes</div><div class="metric-value" style="font-size:20px;color:var(--teal)">14,821</div></div>
+      <div class="metric-card" style="padding:14px"><div class="metric-label">Satellite Passes/Day</div><div class="metric-value" style="font-size:20px;color:var(--success)">96</div></div>
+      <div class="metric-card" style="padding:14px"><div class="metric-label">Data Latency</div><div class="metric-value" style="font-size:20px;color:var(--warning)">&lt; 2s</div></div>
+      <div class="metric-card" style="padding:14px"><div class="metric-label">Data Sources</div><div class="metric-value" style="font-size:20px">5 APIs</div></div>
+    </div>
+  </div>
+
+  <!-- PREDICTION PAGE -->
+  <div class="page" id="page-prediction">
+    <div class="section-title"><span class="emoji">🤖</span> AI-Powered Disaster Prediction Engine</div>
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎛️ Input Parameters</div></div>
+        <div class="control-row"><div class="control-label">Rainfall (mm)</div><input type="range" min="0" max="500" value="220" id="p-rain" oninput="updatePred()" step="1"><div class="control-val" id="v-rain">220</div></div>
+        <div class="control-row"><div class="control-label">Wind Speed (km/h)</div><input type="range" min="0" max="300" value="85" id="p-wind" oninput="updatePred()" step="1"><div class="control-val" id="v-wind">85</div></div>
+        <div class="control-row"><div class="control-label">Seismic Activity</div><input type="range" min="0" max="9" value="2.4" id="p-seismic" oninput="updatePred()" step="0.1"><div class="control-val" id="v-seismic">2.4</div></div>
+        <div class="control-row"><div class="control-label">Temperature (°C)</div><input type="range" min="-10" max="55" value="38" id="p-temp" oninput="updatePred()" step="0.5"><div class="control-val" id="v-temp">38</div></div>
+        <div class="control-row"><div class="control-label">Soil Moisture (%)</div><input type="range" min="0" max="100" value="78" id="p-soil" oninput="updatePred()" step="1"><div class="control-val" id="v-soil">78</div></div>
+        <div class="control-row"><div class="control-label">Population Density</div><input type="range" min="0" max="5000" value="1200" id="p-pop" oninput="updatePred()" step="50"><div class="control-val" id="v-pop">1200</div></div>
+        <div class="control-row"><div class="control-label">Coastal Proximity (km)</div><input type="range" min="0" max="500" value="35" id="p-coast" oninput="updatePred()" step="5"><div class="control-val" id="v-coast">35</div></div>
+        <button class="predict-btn" onclick="runPrediction()">🔮 Run AI Prediction</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">⚠️ Disaster Risk Scores</div></div>
+          <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>🌊 Flood Risk</span><span id="r-flood" style="color:var(--warning);font-weight:600;font-family:var(--mono)">72%</span></div><div class="risk-meter"><div class="risk-fill" id="rf-flood" style="width:72%;background:linear-gradient(90deg,#f6ad55,#fc8181)"></div></div></div>
+          <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>🌍 Earthquake Risk</span><span id="r-quake" style="color:var(--accent);font-family:var(--mono);font-weight:600">28%</span></div><div class="risk-meter"><div class="risk-fill" id="rf-quake" style="width:28%;background:linear-gradient(90deg,#63b3ed,#4299e1)"></div></div></div>
+          <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>🌀 Cyclone Risk</span><span id="r-cyclone" style="color:var(--purple);font-family:var(--mono);font-weight:600">61%</span></div><div class="risk-meter"><div class="risk-fill" id="rf-cyclone" style="width:61%;background:linear-gradient(90deg,#b794f4,#9f7aea)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>🔥 Wildfire Risk</span><span id="r-fire" style="color:var(--danger);font-family:var(--mono);font-weight:600">44%</span></div><div class="risk-meter"><div class="risk-fill" id="rf-fire" style="width:44%;background:linear-gradient(90deg,#fc8181,#e53e3e)"></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 AI Output</div></div>
+          <div class="predict-result" id="predict-output"><span style="color:var(--muted)">→ Configure parameters and click "Run AI Prediction"</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card"><div class="card-header"><div class="card-title">🧠 Random Forest</div></div><div class="model-stat"><span>Accuracy</span><span class="model-stat-val" style="color:var(--success)">91.4%</span></div><div class="model-stat"><span>F1 Score</span><span class="model-stat-val">0.893</span></div><div class="model-stat"><span>Trees</span><span class="model-stat-val">500</span></div><div class="model-stat"><span>Features</span><span class="model-stat-val">42</span></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">⚡ LSTM Network</div></div><div class="model-stat"><span>Accuracy</span><span class="model-stat-val" style="color:var(--success)">89.2%</span></div><div class="model-stat"><span>Layers</span><span class="model-stat-val">4 LSTM</span></div><div class="model-stat"><span>Epochs</span><span class="model-stat-val">250</span></div><div class="model-stat"><span>Inference</span><span class="model-stat-val">~180ms</span></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">📦 Training Data</div></div><div class="model-stat"><span>Records</span><span class="model-stat-val">50,000+</span></div><div class="model-stat"><span>Time Span</span><span class="model-stat-val">1990–2024</span></div><div class="model-stat"><span>Sources</span><span class="model-stat-val">IMD, USGS, NASA</span></div><div class="model-stat"><span>Retrained</span><span class="model-stat-val">Jan 2025</span></div></div>
+    </div>
+  </div>
+
+  <!-- RESOURCES PAGE -->
+  <div class="page" id="page-resources">
+    <div class="section-title"><span class="emoji">🚑</span> Emergency Resource Allocation</div>
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card"><div class="card-header"><div class="card-title">📦 Resource Availability</div><button class="action-btn" onclick="optimizeResources()">⚡ Auto-Optimize</button></div><div id="resource-bars"></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">🚁 Active Rescue Units</div></div><div id="rescue-units"></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-header"><div class="card-title">📊 Resource Distribution</div></div><div style="position:relative;height:280px"><canvas id="distChart"></canvas></div></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚡ Route Optimization</div></div>
+        <div class="model-stat"><span>Algorithm</span><span class="model-stat-val">Dijkstra + GA</span></div>
+        <div class="model-stat"><span>Optimization Score</span><span class="model-stat-val" style="color:var(--success)">94.7%</span></div>
+        <div class="model-stat"><span>Routes Calculated</span><span class="model-stat-val">2,847</span></div>
+        <div class="model-stat"><span>Avg Delivery Time</span><span class="model-stat-val">42 min</span></div>
+        <div class="model-stat"><span>Last Optimization</span><span class="model-stat-val" id="last-opt">--:--</span></div>
+        <button class="predict-btn" onclick="runOptimization()" style="margin-top:14px">🔄 Run Route Optimization</button>
+        <div id="opt-result" style="display:none" class="predict-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS PAGE -->
+  <div class="page" id="page-analytics">
+    <div class="section-title"><span class="emoji">📈</span> Analytics & Insights</div>
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card"><div class="card-header"><div class="card-title">📉 Disaster Trend (5 Years)</div></div><div style="position:relative;height:260px"><canvas id="trendChart"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">🥧 Disaster Type Distribution</div></div><div style="position:relative;height:220px"><canvas id="pieChart"></canvas></div><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#63b3ed;display:inline-block"></span>Floods 38%</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f6ad55;display:inline-block"></span>Earthquakes 24%</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#b794f4;display:inline-block"></span>Cyclones 21%</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#fc8181;display:inline-block"></span>Wildfires 17%</span></div></div>
+    </div>
+    <div class="grid-3">
+      <div class="card"><div class="card-header"><div class="card-title">⏱️ Response Time Trend</div></div><div style="position:relative;height:180px"><canvas id="responseChart"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">💰 Cost Analysis (Cr ₹)</div></div><div style="position:relative;height:180px"><canvas id="costChart"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">📡 System Health</div></div><div class="model-stat"><span>AI Server Uptime</span><span class="model-stat-val" style="color:var(--success)">99.7%</span></div><div class="model-stat"><span>Sensor Network</span><span class="model-stat-val" style="color:var(--success)">98.2%</span></div><div class="model-stat"><span>Satellite Feed</span><span class="model-stat-val" style="color:var(--success)">100%</span></div><div class="model-stat"><span>Data Latency</span><span class="model-stat-val">&lt; 2s</span></div><div class="model-stat"><span>DB Size</span><span class="model-stat-val">2.8 TB</span></div></div>
+    </div>
+  </div>
+
+  <!-- INCIDENTS PAGE -->
+  <div class="page" id="page-incidents">
+    <div class="section-title"><span class="emoji">⚠️</span> Incident Management</div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🗂️ Incident Log</div>
+        <div style="display:flex;gap:8px">
+          <select class="select-filter" id="inc-filter" onchange="renderIncidents()"><option value="all">All</option><option value="flood">Floods</option><option value="earthquake">Earthquakes</option><option value="cyclone">Cyclones</option><option value="wildfire">Wildfires</option></select>
+          <select class="select-filter" id="sev-filter" onchange="renderIncidents()"><option value="all">All Severities</option><option value="critical">Critical</option><option value="high">High</option><option value="moderate">Moderate</option></select>
+        </div>
+      </div>
+      <table class="d-table"><thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Severity</th><th>Affected</th><th>Teams</th><th>Status</th><th>Time</th></tr></thead><tbody id="incidents-tbody"></tbody></table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── STATUS BAR ─────────────────────────────────────────── -->
+<div class="status-bar">
+  <span class="status-item"><span class="status-ok">●</span> AI Engine: Online</span>
+  <span class="status-item"><span class="status-ok">●</span> GIS: Connected</span>
+  <span class="status-item"><span class="status-ok">●</span> NDRF Link: Active</span>
+  <span class="status-item"><span class="status-warn">●</span> Zone 7B: Low Stock</span>
+  <span style="margin-left:auto;font-size:11px">VTU Major Project · Ananya C S (2JI23CS017) · Sandesh Patil (2JI23CS135) · Guide: Prof. Siddharth B</span>
+</div>
+
+<!-- ── Project JS Files (order matters) ──────────────────── -->
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/prediction.js"></script>
+<script src="js/map.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
